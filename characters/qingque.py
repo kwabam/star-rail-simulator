@@ -166,7 +166,7 @@ def qing_que_simulation(max_time=850):
             if qing_que.energy > qing_que.energy_max:  # ult, gets you to 4 of a kind
                 print("ult")
                 outcomes["whiff_ults"] += 1
-                base_dmg += qing_que.calculate_base_dmg(qq_ult_mv, dmg_percent_buff=10)
+                base_dmg += qing_que.calculate_base_dmg(qq_ult_mv, dmg_percent_buff=dmg_percent_buff+10)
                 tiles = []  # discard hand
                 atk_percent_buff = 79  # enter hidden hand state
                 skill_points += 1
