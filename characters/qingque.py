@@ -4,6 +4,7 @@ from character import Character, Lightcone
 import builtins
 from contextlib import contextmanager
 
+
 @contextmanager
 def disable_print():
     original_print = builtins.print
@@ -12,7 +13,6 @@ def disable_print():
         yield
     finally:
         builtins.print = original_print
-
 
 
 def draw_tile():
@@ -119,15 +119,16 @@ def qing_que_simulation(max_time=850):
     outcomes = {
         "skills": [0, 0, 0, 0, 0, 0, 0],
         "hits": 0,
+        "ults": 0,
         "whiff_ults": 0,
         "whiffs": 0,
     }
 
     the_seriousness_of_breakfast = Lightcone(
-        80,
-        846,
-        476,
-        396
+        level=80,
+        hp=846,
+        atk=476,
+        defense=396
     )
     character = Character(
         level=80,
@@ -154,7 +155,7 @@ def qing_que_simulation(max_time=850):
 
     total_dmg = 0
 
-    qq_basic1_mv = 1
+    qq_basic1_mv = 1.1
     qq_basic2_mv = 2.64
 
     qq_ult_mv = 2.16 * 1.1
@@ -193,6 +194,7 @@ def qing_que_simulation(max_time=850):
             tiles = update_hand(tiles, new_tiles)
             skill_points -= 1
             skills += 1
+            character.energy += 1
             if skills < 4:
                 dmg_percent_buff += (31 + 10)
             if random.random() < .24 and e4 == 1:
@@ -210,14 +212,16 @@ def qing_que_simulation(max_time=850):
                 skill_points += 1
             speed_buff = 10  # A6 trace
             base_dmg = 0
-            if character.energy > character.energy_max and e4 == 2:  # ult
+            if character.energy > character.energy_max:  # ult
                 print("ult")
-                base_dmg += qq_ult_mv * character.get_atk(percent_buff=atk_percent_buff)
+                outcomes["ults"] += 1
+                base_dmg += qq_ult_mv * character.get_atk(percent_buff=atk_percent_buff) * character.get_dmg_multiplier(
+                    dmg_percent_buff=dmg_percent_buff + 10)
                 character.energy = 5
             # auto
-            base_dmg += qq_basic2_mv * character.get_atk(percent_buff=atk_percent_buff)
-            outgoing_dmg = e4 * base_dmg * character.get_dmg_multiplier(
-                dmg_percent_buff=dmg_percent_buff) * def_multiplier * character.get_crit_multiplier()
+            base_dmg += e4 * qq_basic2_mv * character.get_atk(percent_buff=atk_percent_buff) * character.get_dmg_multiplier(
+                dmg_percent_buff=dmg_percent_buff)
+            outgoing_dmg = base_dmg * def_multiplier * character.get_crit_multiplier()
             print("outgoing dmg: ", outgoing_dmg)
             total_dmg += outgoing_dmg
         else:  # whiff
@@ -225,12 +229,13 @@ def qing_que_simulation(max_time=850):
             if character.energy > character.energy_max:  # ult, gets you to 4 of a kind
                 print("ult")
                 outcomes["whiff_ults"] += 1
-                base_dmg += qq_ult_mv * character.get_atk()
+                base_dmg += qq_ult_mv * character.get_atk() * character.get_dmg_multiplier(dmg_percent_buff=10)
                 tiles = []  # discard hand
                 atk_percent_buff = 79  # enter hidden hand state
                 skill_points += 1
                 character.energy = 5
-                base_dmg += qq_basic2_mv * character.get_atk(percent_buff=atk_percent_buff)
+                base_dmg += e4 * qq_basic2_mv * character.get_atk(
+                    percent_buff=atk_percent_buff) * character.get_dmg_multiplier()
             else:
                 print("whiff")
                 outcomes["whiffs"] += 1
@@ -240,9 +245,7 @@ def qing_que_simulation(max_time=850):
                 least_common_suit = min((suit for suit in counts if counts[suit] > 0), key=counts.get)
                 tiles.remove(least_common_suit)
 
-
-            outgoing_dmg = e4 * base_dmg * character.get_dmg_multiplier(
-                dmg_percent_buff=dmg_percent_buff) * def_multiplier * character.get_crit_multiplier()
+            outgoing_dmg = e4 * base_dmg * def_multiplier * character.get_crit_multiplier()
             print("outgoing dmg: ", outgoing_dmg)
             total_dmg += outgoing_dmg
         character.energy += 20
@@ -254,6 +257,8 @@ def run_simulation(num_simulations=10000):
     results = []
     outcomes_dict = {
         "skills": [0, 0, 0, 0, 0, 0, 0],
+        "hits": 0,
+        "ults": 0,
         "whiff_ults": 0,
         "whiffs": 0,
     }
@@ -285,7 +290,7 @@ def run_simulation(num_simulations=10000):
                 print(f"{i}: {avg:.2f}")
                 average_skills_used += avg * i
 
-            print(f"Average skills used per turn: {average_skills_used/average_turns:.2f}")
+            print(f"Average skills used per turn: {average_skills_used / average_turns:.2f}")
 
         else:
             avg = outcomes_dict[key] / num_simulations

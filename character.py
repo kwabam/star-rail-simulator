@@ -46,5 +46,5 @@ class Character:
         return (self.crit_rate + crit_rate_buff) / 100 * (1 + self.crit_dmg + crit_dmg_buff) / 100 + (
                     100 - self.crit_rate - crit_rate_buff) / 100
 
-    def get_dmg_multiplier(self, dmg_percent_buff):
+    def get_dmg_multiplier(self, dmg_percent_buff=0):
         return (100 + self.dmg_percent + dmg_percent_buff) / 100
