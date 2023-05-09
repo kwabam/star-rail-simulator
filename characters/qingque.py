@@ -119,8 +119,6 @@ def qing_que_simulation(max_time=850):
             skill_points += 1  # trace 2 gives 1 free skill at start of battle
             trace2 = False
 
-        av = 10000 / qing_que.get_speed(percent_buff=speed_buff)
-        speed_buff = 0
         dmg_percent_buff = 0
         autarky = False
         skills = 0
@@ -190,6 +188,8 @@ def qing_que_simulation(max_time=850):
             print("outgoing dmg: ", outgoing_dmg)
             total_dmg += outgoing_dmg
         qing_que.energy += 20
+        av = 10000 / qing_que.get_speed(percent_buff=speed_buff)
+        speed_buff = 0
         time += av
     print("Total damage: ", total_dmg)
     print("Outcomes: ", outcomes)
