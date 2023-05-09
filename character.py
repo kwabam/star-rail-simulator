@@ -1,3 +1,6 @@
+import random
+
+
 class Lightcone:
     def __init__(self, level, hp, atk, defense):
         self.level = level
@@ -16,7 +19,7 @@ class Character:
         self.base_atk = base_atk + lightcone.atk
         self.base_def = base_def + lightcone.defense
         self.base_speed = base_speed
-        self.energy = energy_max/2
+        self.energy = energy_max / 2
         self.energy_max = energy_max
         self.flat_hp = flat_hp
         self.flat_atk = flat_atk
@@ -34,7 +37,6 @@ class Character:
         return self.base_hp * (1 + self.percent_hp) + self.flat_hp
 
     def get_atk(self, flat_buff=0, percent_buff=0):
-
         return self.base_atk * (100 + self.percent_atk + percent_buff) / 100 + self.flat_atk + flat_buff
 
     def get_def(self, flat_buff=0, percent_buff=0):
@@ -43,15 +45,21 @@ class Character:
     def get_speed(self, flat_buff=0, percent_buff=0):
         return self.base_speed * (100 + self.percent_speed + percent_buff) / 100 + self.flat_speed + flat_buff
 
-    def get_crit_multiplier(self, crit_rate_buff=0, crit_dmg_buff=0):
-        return 1 + (self.crit_rate/100 * self.crit_dmg/100)
+    def get_average_crit_multiplier(self, crit_rate_buff=0, crit_dmg_buff=0):
+        return 1 + (self.crit_rate / 100 * self.crit_dmg / 100)
+
+    def get_crit_rate(self, crit_rate_buff=0):
+        return (self.crit_rate + crit_rate_buff) / 100
+
+    def get_crit_damage_multiplier(self, crit_dmg_buff=0):
+        return 1 + ((self.crit_dmg + crit_dmg_buff) / 100)
 
     def get_dmg_multiplier(self, dmg_percent_buff=0):
         return (100 + self.dmg_percent + dmg_percent_buff) / 100
 
-    def calculate_base_dmg(self, mv, atk_percent_buff=0, dmg_percent_buff=0):
+    def calculate_base_dmg(self, mv, atk_percent_buff=0, dmg_percent_buff=0, crit_rate_buff=0, crit_dmg_buff=0):
+        if random.random() < self.get_crit_rate(crit_rate_buff=crit_rate_buff):  # if you crit
+            mv *= self.get_crit_damage_multiplier(crit_dmg_buff=crit_dmg_buff)  # multiply by crit damage multiplier
         return mv \
                * self.get_atk(percent_buff=atk_percent_buff) \
-               * self.get_dmg_multiplier(dmg_percent_buff=dmg_percent_buff) \
-               * self.get_crit_multiplier()
-
+               * self.get_dmg_multiplier(dmg_percent_buff=dmg_percent_buff)
