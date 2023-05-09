@@ -1,5 +1,6 @@
 import random
 import matplotlib.pyplot as plt
+import numpy as np
 from character import Character, Lightcone
 import builtins
 from contextlib import contextmanager
@@ -61,6 +62,14 @@ def qing_que_simulation(max_time=850):
         atk=476,
         defense=396
     )
+
+    today_is_another_peaceful_day = Lightcone(
+        level=80,
+        hp=846,
+        atk=529,
+        defense=330
+    )
+
     qing_que = Character(
         level=80,
         base_hp=1023,
@@ -80,8 +89,8 @@ def qing_que_simulation(max_time=850):
         crit_dmg=50 + (5.18399999723491 + 0.64800003457896) * 10,  # substats
         dmg_percent=(6.22079991286286 + 2.17730006045792 * 15)  # main stat
                     + 10 + 14.4  # traces
-                    + 24,  # breakfast
-        lightcone=the_seriousness_of_breakfast,
+                    + .4 * 140,  # today is another peaceful day
+        lightcone=today_is_another_peaceful_day,
         energy_max=140
     )
 
@@ -223,6 +232,11 @@ def run_simulation(num_simulations=10000):
     # Calculate average damage and display it
     average_dmg = sum(results) / num_simulations
     print(f"Average damage: {average_dmg:.2f}")
+    first_quartile = np.percentile(results, 25)
+    third_quartile = np.percentile(results, 75)
+
+    print(f"25th percentile (first quartile): {first_quartile:.2f}")
+    print(f"75th percentile (third quartile): {third_quartile:.2f}")
 
     # Calculate and display average outcomes
     print("Average outcomes:")
