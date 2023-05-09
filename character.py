@@ -22,29 +22,36 @@ class Character:
         self.flat_atk = flat_atk
         self.flat_def = flat_def
         self.flat_speed = flat_speed
-        self.hp_percent = percent_hp
-        self.atk_percent = percent_atk
-        self.def_percent = percent_def
-        self.speed_percent = percent_speed
+        self.percent_hp = percent_hp
+        self.percent_atk = percent_atk
+        self.percent_def = percent_def
+        self.percent_speed = percent_speed
         self.crit_rate = crit_rate
         self.crit_dmg = crit_dmg
         self.dmg_percent = dmg_percent
 
     def get_hp(self):
-        return self.base_hp * (1 + self.hp_percent) + self.flat_hp
+        return self.base_hp * (1 + self.percent_hp) + self.flat_hp
 
     def get_atk(self, flat_buff=0, percent_buff=0):
-        return self.base_atk * (100 + self.atk_percent + percent_buff) / 100 + self.flat_atk + flat_buff
+
+        return self.base_atk * (100 + self.percent_atk + percent_buff) / 100 + self.flat_atk + flat_buff
 
     def get_def(self, flat_buff=0, percent_buff=0):
-        return self.base_def * (100 + self.def_percent + percent_buff) / 100 + self.flat_def + flat_buff
+        return self.base_def * (100 + self.percent_def + percent_buff) / 100 + self.flat_def + flat_buff
 
     def get_speed(self, flat_buff=0, percent_buff=0):
-        return self.base_speed * (100 + self.speed_percent + percent_buff) / 100 + self.flat_speed + flat_buff
+        return self.base_speed * (100 + self.percent_speed + percent_buff) / 100 + self.flat_speed + flat_buff
 
     def get_crit_multiplier(self, crit_rate_buff=0, crit_dmg_buff=0):
-        return (self.crit_rate + crit_rate_buff) / 100 * (1 + self.crit_dmg + crit_dmg_buff) / 100 + (
-                    100 - self.crit_rate - crit_rate_buff) / 100
+        return 1 + (self.crit_rate/100 * self.crit_dmg/100)
 
     def get_dmg_multiplier(self, dmg_percent_buff=0):
         return (100 + self.dmg_percent + dmg_percent_buff) / 100
+
+    def calculate_base_dmg(self, mv, atk_percent_buff=0, dmg_percent_buff=0):
+        return mv \
+               * self.get_atk(percent_buff=atk_percent_buff) \
+               * self.get_dmg_multiplier(dmg_percent_buff=dmg_percent_buff) \
+               * self.get_crit_multiplier()
+
