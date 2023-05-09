@@ -88,6 +88,7 @@ def qing_que_simulation(max_time=850):
     enemy_level = 80
     enemy_def = 200 + 10 * enemy_level
     enemy_def = .8 * enemy_def  # quantum set
+    toughness_multiplier = .9 # unbroken enemies take 10% less damage
     def_multiplier = 1 - (enemy_def / (enemy_def + 200 + 10 * qing_que.level))
 
     total_dmg = 0
@@ -158,7 +159,7 @@ def qing_que_simulation(max_time=850):
             base_dmg += (2 if autarky else 1) * qing_que.calculate_base_dmg(qq_basic2_mv,
                                                                             dmg_percent_buff=dmg_percent_buff,
                                                                             atk_percent_buff=atk_percent_buff)
-            outgoing_dmg = base_dmg * def_multiplier
+            outgoing_dmg = base_dmg * toughness_multiplier * def_multiplier
             print("outgoing dmg: ", outgoing_dmg)
             total_dmg += outgoing_dmg
         else:  # whiff
@@ -184,7 +185,7 @@ def qing_que_simulation(max_time=850):
                 least_common_suit = min((suit for suit in counts if counts[suit] > 0), key=counts.get)
                 tiles.remove(least_common_suit)
 
-            outgoing_dmg = base_dmg * def_multiplier
+            outgoing_dmg = base_dmg * toughness_multiplier * def_multiplier
             print("outgoing dmg: ", outgoing_dmg)
             total_dmg += outgoing_dmg
         qing_que.energy += 20
