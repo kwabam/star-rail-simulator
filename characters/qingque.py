@@ -5,6 +5,8 @@ from character import Character, Lightcone
 import builtins
 from contextlib import contextmanager
 
+from lightcones import the_seriousness_of_breakfast, today_is_another_peaceful_day
+
 
 @contextmanager
 def disable_print():
@@ -16,35 +18,90 @@ def disable_print():
         builtins.print = original_print
 
 
-def draw_tile():
-    return random.choice(['A', 'B', 'C'])
+def remove_suit(hand, suit):
+    if suit in hand:
+        hand.remove(suit)
+    return hand
 
 
-def draw_tiles(num_tiles):
-    return [draw_tile() for _ in range(num_tiles)]
+# https://colab.research.google.com/drive/1lKI9ziUxsovuDVzfTXioQAjEjPt9qv8p
+def process_suit_removal(hand, counts, primary, secondary, tertiary):
+    # primary is a suit that we have >= 2 of
+    # we have 5 tiles in hand
+    # secondary/tertiary not ordered by count
+
+    # if there is no tiles of secondary suit
+    if counts.get(secondary, 0) == 0:
+        # remove the least common suit
+        if counts[primary] > counts[tertiary]:
+            return remove_suit(hand, tertiary)
+        else:
+            return remove_suit(hand, primary)
+    # if there is no tiles of tertiary suit
+    elif counts.get(tertiary, 0) == 0:
+        # remove the least common suit
+        if counts[primary] > counts[secondary]:
+            return remove_suit(hand, secondary)
+        else:
+            return remove_suit(hand, primary)
+    # if there are  tiles of all suits
+    if counts[secondary] >= 1 and counts[tertiary] >= 1:
+        # if secondary > tertiary, then we have 2 pairs. remove single.
+        if counts[secondary] > counts[tertiary]:
+            return remove_suit(hand, tertiary)
+        # same as above, but vice versa
+        elif counts[tertiary] > counts[secondary]:
+            return remove_suit(hand, secondary)
+        # if secondary == tertiary, then remove random one between them (we have 3 primary, 1 secondary, 1 tertiary)
+        elif random.random() < 0.5:
+            return remove_suit(hand, secondary)
+        else:
+            return remove_suit(hand, tertiary)
+
+
+def draw_tile(hand):
+    suits = ['Wan', 'Tong', 'Tiao']
+    # if <4 tiles in hand, draw a random tile
+    if len(hand) < 4:
+        hand.append(random.choice(suits))
+        return hand
+    # if 4 of a kind, no changes
+    if check_four_of_a_kind(hand):
+        return hand
+
+    # draw a random tile
+    hand.append(random.choice(suits))
+    counts = count_tiles(hand)
+
+    # hand size is 5
+    # at least one of the suits has a pair
+    # run algorithm to determine which tile to remove
+    if counts.get('Wan', 0) >= 2 and len(hand) == 5:
+        process_suit_removal(hand, counts, 'Wan', 'Tong', 'Tiao')
+    if counts.get('Tong', 0) >= 2 and len(hand) == 5:
+        process_suit_removal(hand, counts, 'Tong', 'Wan', 'Tiao')
+    if counts.get('Tiao', 0) >= 2 and len(hand) == 5:
+        process_suit_removal(hand, counts, 'Tiao', 'Wan', 'Tong')
+
+    return hand
+
+
+def draw_tiles(hand, num_tiles=2):
+    for _ in range(num_tiles):
+        hand = draw_tile(hand)
+    return hand
 
 
 def count_tiles(tiles):
-    counts = {'A': 0, 'B': 0, 'C': 0}
+    counts = {'Wan': 0, 'Tong': 0, 'Tiao': 0}
     for tile in tiles:
         counts[tile] += 1
     return counts
 
 
-def check_four_of_a_kind(tile_counts):
+def check_four_of_a_kind(hand):
+    tile_counts = count_tiles(hand)
     return any(count >= 4 for count in tile_counts.values())
-
-
-def update_hand(hand, new_tiles):
-    hand.extend(new_tiles)
-    counts = count_tiles(hand)
-
-    while len(hand) > 4:
-        least_common_suit = min((suit for suit in counts if counts[suit] > 0), key=counts.get)
-        hand.remove(least_common_suit)
-        counts[least_common_suit] -= 1
-
-    return hand
 
 
 def qing_que_simulation(max_time=850):
@@ -52,23 +109,10 @@ def qing_que_simulation(max_time=850):
         "skills": [0, 0, 0, 0, 0, 0, 0],
         "hits": 0,
         "ults": 0,
+        "autarky": 0,
         "whiff_ults": 0,
         "whiffs": 0,
     }
-
-    the_seriousness_of_breakfast = Lightcone(
-        level=80,
-        hp=846,
-        atk=476,
-        defense=396
-    )
-
-    today_is_another_peaceful_day = Lightcone(
-        level=80,
-        hp=846,
-        atk=529,
-        defense=330
-    )
 
     qing_que = Character(
         level=80,
@@ -87,18 +131,20 @@ def qing_que_simulation(max_time=850):
         crit_rate=5 + (5.18399999723491 + 1.8143999571227 * 15)  # main stat
                   + (2.59199999861745 + 0.32400001728948) * 10,  # substats
         crit_dmg=50 + (5.18399999723491 + 0.64800003457896) * 10,  # substats
-        dmg_percent=(6.22079991286286 + 2.17730006045792 * 15)  # main stat
-                    + 10 + 14.4  # traces
-                    + .4 * 140,  # today is another peaceful day
-        lightcone=today_is_another_peaceful_day,
+        percent_dmg=(6.22079991286286 + 2.17730006045792 * 15)  # main stat
+                    + 10 + 14.4,  # traces
+        lightcone=the_seriousness_of_breakfast,
         energy_max=140
     )
 
     enemy_level = 80
     enemy_def = 200 + 10 * enemy_level
     enemy_def = .8 * enemy_def  # quantum set
-    toughness_multiplier = .9 # unbroken enemies take 10% less damage
+    toughness_multiplier = .9  # unbroken enemies take 10% less damage
     def_multiplier = 1 - (enemy_def / (enemy_def + 200 + 10 * qing_que.level))
+
+    max_skills = 6  # maximum skills allowed to use per turn
+    ult_skill_threshold = 0  # do not ult unless at least this amount of skills has been used, unless whiffed on draws
 
     total_dmg = 0
 
@@ -112,16 +158,16 @@ def qing_que_simulation(max_time=850):
 
     skill_points = 3
 
-    tiles = []
+    hand = []
 
     time = 10000 / qing_que.get_speed()
     while time < max_time:
         for i in range(4):  # draw 1 tile for each teammate and 1 for self
-            tiles = update_hand(tiles, draw_tiles(1))
+            hand = draw_tile(hand)
             qing_que.energy += 1
             if skill_points < 5 and i != 3:  # qq doesnt gen skill point at start
                 skill_points += 1
-            if check_four_of_a_kind(count_tiles(tiles)):
+            if check_four_of_a_kind(hand):
                 break
         print(f"Time: {time:.2f}, Skill Points: {skill_points}, Energy: {qing_que.energy}, Damage: {total_dmg:.2f}")
 
@@ -129,35 +175,35 @@ def qing_que_simulation(max_time=850):
             skill_points += 1  # trace 2 gives 1 free skill at start of battle
             trace2 = False
 
-        dmg_percent_buff = 0
-        autarky = False
-        skills = 0
+        dmg_percent_buff = 0  # dmg percent buff from talent and a4 trace
+        autarky = False  # whether e4 has activated this round
+        skills_used = 0  # number of skills used this round
 
-        while skill_points > 0 and not check_four_of_a_kind(count_tiles(tiles)):
+        while skill_points > 0 and not check_four_of_a_kind(hand) and skills_used < max_skills:
             # Use skill
-            new_tiles = draw_tiles(2)
-            tiles = update_hand(tiles, new_tiles)
+            hand = draw_tiles(hand, 2)
             skill_points -= 1
-            skills += 1
+            skills_used += 1
             qing_que.energy += 1
-            if skills < 4:  # can only get up to 4 buffs from skill
+            if skills_used < 4:  # can only get up to 4 buffs from skill
                 dmg_percent_buff += (31 + 10)
             if not autarky and random.random() < .24:  # 1st condition avoids dupe prints
                 print("autarky")
+                outcomes["autarky"] += 1
                 autarky = True  # e4: 24% fixed chance for autarky, which doubles basic attack damage
 
-        print("skills: ", skills)
-        outcomes["skills"][skills] += 1
-        if check_four_of_a_kind(count_tiles(tiles)):  # 4 of a kind
+        print("skills: ", skills_used)
+        outcomes["skills"][skills_used] += 1
+        if check_four_of_a_kind(hand):  # 4 of a kind
             print("4 of a kind")
             outcomes["hits"] += 1
-            tiles = []  # discard hand
+            hand = []  # discard hand
             atk_percent_buff = 79  # enter hidden hand state
             if skill_points < 5:
                 skill_points += 1
             speed_buff = 10  # A6 trace
             base_dmg = 0
-            if qing_que.energy > qing_que.energy_max:  # ult
+            if skills_used >= ult_skill_threshold and qing_que.energy > qing_que.energy_max:  # ult
                 print("ult")
                 outcomes["ults"] += 1
                 base_dmg += qing_que.calculate_base_dmg(qq_ult_mv,
@@ -176,8 +222,8 @@ def qing_que_simulation(max_time=850):
             if qing_que.energy > qing_que.energy_max:  # ult, gets you to 4 of a kind
                 print("ult")
                 outcomes["whiff_ults"] += 1
-                base_dmg += qing_que.calculate_base_dmg(qq_ult_mv, dmg_percent_buff=dmg_percent_buff+10)
-                tiles = []  # discard hand
+                base_dmg += qing_que.calculate_base_dmg(qq_ult_mv, dmg_percent_buff=dmg_percent_buff + 10)
+                hand = []  # discard hand
                 atk_percent_buff = 79  # enter hidden hand state
                 skill_points += 1
                 qing_que.energy = 5
@@ -190,9 +236,9 @@ def qing_que_simulation(max_time=850):
                 base_dmg += (2 if autarky else 1) * qing_que.calculate_base_dmg(qq_basic1_mv,
                                                                                 dmg_percent_buff=dmg_percent_buff)
                 # discard least common tile
-                counts = count_tiles(tiles)
+                counts = count_tiles(hand)
                 least_common_suit = min((suit for suit in counts if counts[suit] > 0), key=counts.get)
-                tiles.remove(least_common_suit)
+                hand.remove(least_common_suit)
 
             outgoing_dmg = base_dmg * toughness_multiplier * def_multiplier
             print("outgoing dmg: ", outgoing_dmg)
@@ -212,10 +258,11 @@ def run_simulation(num_simulations=10000):
         "skills": [0, 0, 0, 0, 0, 0, 0],
         "hits": 0,
         "ults": 0,
+        "autarky": 0,
         "whiff_ults": 0,
         "whiffs": 0,
     }
-    #with disable_print():
+    # with disable_print():
     for i in range(num_simulations):
         print(f"Simulation {i + 1}")
         dmg, outcomes = qing_que_simulation()
@@ -247,14 +294,17 @@ def run_simulation(num_simulations=10000):
             average_skills_used = 0
             for i in range(len(outcomes_dict[key])):
                 avg = outcomes_dict[key][i] / num_simulations
-                print(f"{i}: {avg:.2f}")
+                print(f"{i}: {avg:.2f}", end=" | ")
                 average_skills_used += avg * i
 
-            print(f"Average skills used per turn: {average_skills_used / average_turns:.2f}")
+            print(f"\nAverage skills used per turn: {average_skills_used / average_turns:.2f}")
 
         else:
             avg = outcomes_dict[key] / num_simulations
-            print(f"{key}: {avg:.2f}")
+            if key in ["hits", "autarky", "whiff_ults", "whiffs"]:
+                print(f"{key}: {100 * avg / average_turns:.2f}%")
+            else:
+                print(f"{key}: {avg:.2f}")
     print(f"Average turns: {average_turns:.2f}")
 
     # Display damage distribution using a histogram

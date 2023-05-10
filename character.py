@@ -1,37 +1,37 @@
+from dataclasses import dataclass, fields
 import random
+from typing import Optional
+from lightcones import Lightcone
 
-
-class Lightcone:
-    def __init__(self, level, hp, atk, defense):
-        self.level = level
-        self.hp = hp
-        self.atk = atk
-        self.defense = defense
-
-
+@dataclass
 class Character:
-    def __init__(self, level, base_hp, base_atk, base_def, base_speed, lightcone, energy_max,
-                 flat_hp=0, flat_atk=0, flat_def=0, flat_speed=0,
-                 percent_hp=0, percent_atk=0, percent_def=0, percent_speed=0,
-                 crit_rate=5, crit_dmg=50, dmg_percent=0):
-        self.level = level
-        self.base_hp = base_hp + lightcone.hp
-        self.base_atk = base_atk + lightcone.atk
-        self.base_def = base_def + lightcone.defense
-        self.base_speed = base_speed
-        self.energy = energy_max / 2
-        self.energy_max = energy_max
-        self.flat_hp = flat_hp
-        self.flat_atk = flat_atk
-        self.flat_def = flat_def
-        self.flat_speed = flat_speed
-        self.percent_hp = percent_hp
-        self.percent_atk = percent_atk
-        self.percent_def = percent_def
-        self.percent_speed = percent_speed
-        self.crit_rate = crit_rate
-        self.crit_dmg = crit_dmg
-        self.dmg_percent = dmg_percent
+    level: int
+    base_hp: int
+    base_atk: int
+    base_def: int
+    base_speed: int
+    lightcone: Lightcone
+    energy_max: int
+    flat_hp: Optional[float] = 0
+    flat_atk: Optional[float] = 0
+    flat_def: Optional[float] = 0
+    flat_speed: Optional[float] = 0
+    percent_hp: Optional[float] = 0
+    percent_atk: Optional[float] = 0
+    percent_def: Optional[float] = 0
+    percent_speed: Optional[float] = 0
+    percent_dmg: Optional[float] = 0
+    crit_rate: Optional[float] = 5
+    crit_dmg: Optional[float] = 50
+
+    def __post_init__(self):
+        self.energy = self.energy_max / 2
+        fields_to_add = [field.name for field in fields(self.lightcone) if field.name != 'level']
+        for field in fields_to_add:
+            base_field_value = getattr(self, field)
+            lightcone_field_value = getattr(self.lightcone, field, 0)
+            setattr(self, field, base_field_value + lightcone_field_value)
+
 
     def get_hp(self):
         return self.base_hp * (1 + self.percent_hp) + self.flat_hp
@@ -55,7 +55,7 @@ class Character:
         return 1 + ((self.crit_dmg + crit_dmg_buff) / 100)
 
     def get_dmg_multiplier(self, dmg_percent_buff=0):
-        return (100 + self.dmg_percent + dmg_percent_buff) / 100
+        return (100 + self.percent_dmg + dmg_percent_buff) / 100
 
     def calculate_base_dmg(self, mv, atk_percent_buff=0, dmg_percent_buff=0, crit_rate_buff=0, crit_dmg_buff=0):
         if random.random() < self.get_crit_rate(crit_rate_buff=crit_rate_buff):  # if you crit
