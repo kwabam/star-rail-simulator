@@ -1,6 +1,10 @@
 from dataclasses import dataclass, fields
 import json
 from typing import Optional
+from pathlib import Path
+
+base_directory = Path(__file__).resolve().parent
+
 
 key_map = {
     'HPDelta': 'flat_hp',
@@ -68,7 +72,7 @@ class Mainstats:
 
 
 def load_relic_sub_affix_config():
-    file_path = 'RelicSubAffixConfig.json'
+    file_path = base_directory / 'RelicSubAffixConfig.json'
     with open(file_path, 'r') as file:
         data = json.load(file)
 
@@ -87,7 +91,7 @@ def load_relic_sub_affix_config():
     return result
 
 def load_relic_main_affix_config():
-    file_path = 'RelicMainAffixConfig.json'
+    file_path = base_directory / 'RelicMainAffixConfig.json'
     with open(file_path, 'r') as file:
         data = json.load(file)
 
