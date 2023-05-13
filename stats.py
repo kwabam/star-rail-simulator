@@ -4,11 +4,11 @@ from typing import Optional
 
 key_map = {
     'HPDelta': 'flat_hp',
-    'ATKDelta': 'flat_atk',
-    'DefDelta': 'flat_def',
+    'AttackDelta': 'flat_atk',
+    'DefenceDelta': 'flat_def',
     'SpeedDelta': 'flat_speed',
     'HPAddedRatio': 'percent_hp',
-    'ATKAddedRatio': 'percent_atk',
+    'AttackAddedRatio': 'percent_atk',
     'DefenceAddedRatio': 'percent_def',
     'CriticalChanceBase': 'crit_rate',
     'CriticalDamageBase': 'crit_dmg',
@@ -93,16 +93,16 @@ def load_relic_main_affix_config():
 
     result = {}
     for _, entry in data.items():
-        entry = entry['1']
-        property_name = entry['Property']
-        base_value = entry['BaseValue']['Value']
-        level_add = entry['LevelAdd']['Value']
-        calculated_value = base_value + level_add * 15
-        if property_name in percent_stats:
-            calculated_value *= 100
+        for item_properties in entry.values():
+            property_name = item_properties['Property']
+            base_value = item_properties['BaseValue']['Value']
+            level_add = item_properties['LevelAdd']['Value']
+            calculated_value = base_value + level_add * 15
+            if property_name in percent_stats:
+                calculated_value *= 100
 
-        remapped_key = key_map.get(property_name, property_name)
-        result[remapped_key] = calculated_value
+            remapped_key = key_map.get(property_name, property_name)
+            result[remapped_key] = calculated_value
     return result
 
 
