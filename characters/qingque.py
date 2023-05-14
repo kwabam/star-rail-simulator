@@ -1,22 +1,27 @@
 import random
 import matplotlib.pyplot as plt
 import numpy as np
-from character import Character, Lightcone
-import builtins
-from contextlib import contextmanager
 
-from lightcones import the_seriousness_of_breakfast, today_is_another_peaceful_day
+from components.character import Character
+from components.lightcones import the_seriousness_of_breakfast
+from components.stats import MainStats, SubStats
 
 
-@contextmanager
-def disable_print():
-    original_print = builtins.print
-    builtins.print = lambda *args, **kwargs: None
-    try:
-        yield
-    finally:
-        builtins.print = original_print
+class Qingque(Character):
+    def __init__(self, lightcone, main_stats, sub_stats, energy_max=140, ascension=6, level=80):
+        super().__init__("qingque", lightcone, main_stats, sub_stats, energy_max, ascension, level)
 
+    def act(self): # TODO: Refactor this whole class to use game logic
+        pass
+
+    def basic(self):
+        pass
+
+    def skill(self):
+        pass
+
+    def ult(self):
+        pass
 
 def remove_suit(hand, suit):
     if suit in hand:
@@ -104,7 +109,7 @@ def check_four_of_a_kind(hand):
     return any(count >= 4 for count in tile_counts.values())
 
 
-def qing_que_simulation(max_time=850):
+def qing_que_simulation(character, max_time=850):
     outcomes = {
         "skills": [0, 0, 0, 0, 0, 0, 0],
         "hits": 0,
@@ -114,34 +119,12 @@ def qing_que_simulation(max_time=850):
         "whiffs": 0,
     }
 
-    qing_que = Character(
-        level=80,
-        base_hp=1023,
-        base_atk=652,
-        base_def=441,
-        base_speed=98,
-        flat_hp=705,
-        flat_atk=(56.4479991140058 + 19.7567996907402 * 15),  # main stat (gloves)
-        flat_speed=25,
-        percent_atk=(6.91199985661483 + 2.41920001267946 * 15)  # main stat
-                    + (3.4559999981566 + 0.431999999769576) * 4  # substats
-                    + 24  # planetary set bonus
-                    + 28,  # traces
-        percent_def=12.5,  # traces
-        crit_rate=5 + (5.18399999723491 + 1.8143999571227 * 15)  # main stat
-                  + (2.59199999861745 + 0.32400001728948) * 10,  # substats
-        crit_dmg=50 + (5.18399999723491 + 0.64800003457896) * 10,  # substats
-        percent_dmg=(6.22079991286286 + 2.17730006045792 * 15)  # main stat
-                    + 10 + 14.4,  # traces
-        lightcone=the_seriousness_of_breakfast,
-        energy_max=140
-    )
 
     enemy_level = 80
     enemy_def = 200 + 10 * enemy_level
     enemy_def = .8 * enemy_def  # quantum set
     toughness_multiplier = .9  # unbroken enemies take 10% less damage
-    def_multiplier = 1 - (enemy_def / (enemy_def + 200 + 10 * qing_que.level))
+    def_multiplier = 1 - (enemy_def / (enemy_def + 200 + 10 * character.level))
 
     max_skills = 6  # maximum skills allowed to use per turn
     ult_skill_threshold = 0  # do not ult unless at least this amount of skills has been used, unless whiffed on draws
@@ -160,16 +143,16 @@ def qing_que_simulation(max_time=850):
 
     hand = []
 
-    time = 10000 / qing_que.get_speed()
+    time = 10000 / character.get_speed()
     while time < max_time:
         for i in range(4):  # draw 1 tile for each teammate and 1 for self
             hand = draw_tile(hand)
-            qing_que.energy += 1
+            character.energy += 1
             if skill_points < 5 and i != 3:  # qq doesnt gen skill point at start
                 skill_points += 1
             if check_four_of_a_kind(hand):
                 break
-        print(f"Time: {time:.2f}, Skill Points: {skill_points}, Energy: {qing_que.energy}, Damage: {total_dmg:.2f}")
+        print(f"Time: {time:.2f}, Skill Points: {skill_points}, Energy: {character.energy}, Damage: {total_dmg:.2f}")
 
         if trace2:
             skill_points += 1  # trace 2 gives 1 free skill at start of battle
@@ -184,7 +167,7 @@ def qing_que_simulation(max_time=850):
             hand = draw_tiles(hand, 2)
             skill_points -= 1
             skills_used += 1
-            qing_que.energy += 1
+            character.energy += 1
             if skills_used < 4:  # can only get up to 4 buffs from skill
                 dmg_percent_buff += (31 + 10)
             if not autarky and random.random() < .24:  # 1st condition avoids dupe prints
@@ -203,38 +186,38 @@ def qing_que_simulation(max_time=850):
                 skill_points += 1
             speed_buff = 10  # A6 trace
             base_dmg = 0
-            if skills_used >= ult_skill_threshold and qing_que.energy > qing_que.energy_max:  # ult
+            if skills_used >= ult_skill_threshold and character.energy > character.energy_max:  # ult
                 print("ult")
                 outcomes["ults"] += 1
-                base_dmg += qing_que.calculate_base_dmg(qq_ult_mv,
-                                                        dmg_percent_buff=dmg_percent_buff + 10,
-                                                        atk_percent_buff=atk_percent_buff)
-                qing_que.energy = 5
+                base_dmg += character.calculate_base_dmg(qq_ult_mv,
+                                                         dmg_percent_buff=dmg_percent_buff + 10,
+                                                         atk_percent_buff=atk_percent_buff)
+                character.energy = 5
             # auto
-            base_dmg += (2 if autarky else 1) * qing_que.calculate_base_dmg(qq_basic2_mv,
-                                                                            dmg_percent_buff=dmg_percent_buff,
-                                                                            atk_percent_buff=atk_percent_buff)
+            base_dmg += (2 if autarky else 1) * character.calculate_base_dmg(qq_basic2_mv,
+                                                                             dmg_percent_buff=dmg_percent_buff,
+                                                                             atk_percent_buff=atk_percent_buff)
             outgoing_dmg = base_dmg * toughness_multiplier * def_multiplier
             print("outgoing dmg: ", outgoing_dmg)
             total_dmg += outgoing_dmg
         else:  # whiff
             base_dmg = 0
-            if qing_que.energy > qing_que.energy_max:  # ult, gets you to 4 of a kind
+            if character.energy > character.energy_max:  # ult, gets you to 4 of a kind
                 print("ult")
                 outcomes["whiff_ults"] += 1
-                base_dmg += qing_que.calculate_base_dmg(qq_ult_mv, dmg_percent_buff=dmg_percent_buff + 10)
+                base_dmg += character.calculate_base_dmg(qq_ult_mv, dmg_percent_buff=dmg_percent_buff + 10)
                 hand = []  # discard hand
                 atk_percent_buff = 79  # enter hidden hand state
                 skill_points += 1
-                qing_que.energy = 5
-                base_dmg += (2 if autarky else 1) * qing_que.calculate_base_dmg(qq_basic2_mv,
-                                                                                dmg_percent_buff=dmg_percent_buff,
-                                                                                atk_percent_buff=atk_percent_buff)
+                character.energy = 5
+                base_dmg += (2 if autarky else 1) * character.calculate_base_dmg(qq_basic2_mv,
+                                                                                 dmg_percent_buff=dmg_percent_buff,
+                                                                                 atk_percent_buff=atk_percent_buff)
             else:
                 print("whiff")
                 outcomes["whiffs"] += 1
-                base_dmg += (2 if autarky else 1) * qing_que.calculate_base_dmg(qq_basic1_mv,
-                                                                                dmg_percent_buff=dmg_percent_buff)
+                base_dmg += (2 if autarky else 1) * character.calculate_base_dmg(qq_basic1_mv,
+                                                                                 dmg_percent_buff=dmg_percent_buff)
                 # discard least common tile
                 counts = count_tiles(hand)
                 least_common_suit = min((suit for suit in counts if counts[suit] > 0), key=counts.get)
@@ -243,8 +226,8 @@ def qing_que_simulation(max_time=850):
             outgoing_dmg = base_dmg * toughness_multiplier * def_multiplier
             print("outgoing dmg: ", outgoing_dmg)
             total_dmg += outgoing_dmg
-        qing_que.energy += 20
-        av = 10000 / qing_que.get_speed(percent_buff=speed_buff)
+        character.energy += 20
+        av = 10000 / character.get_speed(percent_buff=speed_buff)
         speed_buff = 0
         time += av
     print("Total damage: ", total_dmg)
@@ -262,10 +245,15 @@ def run_simulation(num_simulations=10000):
         "whiff_ults": 0,
         "whiffs": 0,
     }
-    # with disable_print():
+    main_stats = MainStats(flat_hp=1, flat_atk=1, flat_speed=1, crit_rate=1, percent_atk=1, percent_dmg=1)
+    sub_stats = SubStats(percent_atk=4, crit_rate=10, crit_dmg=10)
+    qq = Qingque(the_seriousness_of_breakfast,  main_stats, sub_stats, energy_max=140)
+    qq.percent_atk += 24 # SSS
+    qq.percent_dmg += 10 # quantum set
+
     for i in range(num_simulations):
         print(f"Simulation {i + 1}")
-        dmg, outcomes = qing_que_simulation()
+        dmg, outcomes = qing_que_simulation(qq)
         results.append(dmg)
 
         for key in outcomes_dict:
@@ -312,8 +300,17 @@ def run_simulation(num_simulations=10000):
     plt.xlabel('Damage')
     plt.ylabel('Frequency')
     plt.title('Damage Distribution')
+
+    # Add average, 25th, and 75th percentiles, lowest, and highest numbers to the chart
+    ymin, ymax = plt.ylim()
+    plt.axvline(average_dmg, color='r', linestyle='dashed', linewidth=2)
+    plt.text(average_dmg, ymax * 0.95, f'Average: {average_dmg:.0f}', rotation=0, color='r')
+
+    plt.axvline(first_quartile, color='g', linestyle='dashed', linewidth=2)
+    plt.axvline(third_quartile, color='b', linestyle='dashed', linewidth=2)
+
     plt.show()
 
 
 if __name__ == "__main__":
-    run_simulation()
+    run_simulation(10000)

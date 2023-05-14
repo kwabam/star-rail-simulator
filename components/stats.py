@@ -3,7 +3,7 @@ import json
 from typing import Optional
 from pathlib import Path
 
-base_directory = Path(__file__).resolve().parent
+base_directory = Path(__file__).resolve().parent.parent
 
 
 key_map = {
@@ -26,14 +26,15 @@ key_map = {
     'WindAddedRatio': 'percent_dmg',
     'QuantumAddedRatio': 'percent_dmg',
     'ImaginaryAddedRatio': 'percent_dmg',
-    'SPRatioBase': 'energy_regeneration_rate'
+    'SPRatioBase': 'energy_regeneration_rate',
+    'HealRatioBase': 'percent_heal'
 }
 
 terms = ["Critical", "Ratio", "Resistance"] # stats that are percentages
 percent_stats = {key for key in key_map if any(term in key for term in terms)}
 
 @dataclass
-class Substats:
+class SubStats:
     flat_hp: Optional[int] = 0
     flat_atk: Optional[int] = 0
     flat_def: Optional[int] = 0
@@ -51,7 +52,7 @@ class Substats:
             setattr(self, field.name, getattr(self, field.name) * field_value)
 
 @dataclass
-class Mainstats:
+class MainStats:
     flat_hp: Optional[int] = 0
     flat_atk: Optional[int] = 0
     flat_def: Optional[int] = 0
@@ -72,7 +73,7 @@ class Mainstats:
 
 
 def load_relic_sub_affix_config():
-    file_path = base_directory / 'RelicSubAffixConfig.json'
+    file_path = base_directory / 'data/RelicSubAffixConfig.json'
     with open(file_path, 'r') as file:
         data = json.load(file)
 
@@ -91,7 +92,7 @@ def load_relic_sub_affix_config():
     return result
 
 def load_relic_main_affix_config():
-    file_path = base_directory / 'RelicMainAffixConfig.json'
+    file_path = base_directory / 'data/RelicMainAffixConfig.json'
     with open(file_path, 'r') as file:
         data = json.load(file)
 
@@ -104,9 +105,9 @@ def load_relic_main_affix_config():
             calculated_value = base_value + level_add * 15
             if property_name in percent_stats:
                 calculated_value *= 100
-
             remapped_key = key_map.get(property_name, property_name)
-            result[remapped_key] = calculated_value
+            result[remapped_key] = max(result.get(remapped_key, 0), calculated_value)
+
     return result
 
 
@@ -116,5 +117,5 @@ if __name__ == "__main__":
     relic_main_affix_dict = load_relic_main_affix_config()
     print(relic_main_affix_dict)
     print()
-    print(Substats(flat_hp=5, crit_rate=10, crit_dmg=10))
-    print(Mainstats(flat_hp=5, crit_rate=10, crit_dmg=10))
+    print(SubStats(flat_hp=4, crit_rate=10, crit_dmg=10))
+    print(MainStats(flat_hp=1, crit_rate=1, crit_dmg=1))
