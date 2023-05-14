@@ -9,7 +9,7 @@ class Seele(Character):
         super().__init__("seele", lightcone, main_stats, sub_stats, energy_max, ascension, level)
 
     def act(self):
-        if self.game.time >= self.game.time_limit:
+        if self.game.time >= self.game.time_limit/2:
             self.game.add_buff(self, "cruising low hp", "crit_rate", 16, 99, 1)
 
         if self.get_speed() >= 120:
