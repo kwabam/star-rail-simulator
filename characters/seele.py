@@ -49,24 +49,3 @@ class Seele(Character):
         dmg = self.calculate_base_dmg(mv=4.25)
         print("ult damage: ", dmg)
         return dmg
-
-
-def main():
-    main_stats = MainStats(flat_hp=1, flat_atk=1, crit_rate=1, percent_atk=2, percent_dmg=1)
-    sub_stats = SubStats(flat_speed=1, percent_atk=3, crit_rate=10, crit_dmg=10)
-    seele = Seele(cruising_in_the_stellar_sea, main_stats, sub_stats)
-    seele.percent_atk += 12  # SSS
-    seele.percent_def_ignore = 10  # quantum set
-    seele.percent_dmg += 10  # quantum set
-
-    game = Game(team=[seele], skill_points=20)
-    seele.game = game
-    # seele uses technique before entering battle
-    game.add_buff(seele, "talent_dmg", "percent_dmg", 80, 1)
-    game.add_buff(seele, "talent_pen", "percent_penetration", 20, 1)
-
-    game.play()
-
-
-if __name__ == "__main__":
-    main()

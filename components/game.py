@@ -59,7 +59,7 @@ class Game(ABC):
             self.buffs[character] = new_buffs
 
     def play(self):
-        while self.time < self.time_limit:
+        while True:
             # Sort the action queue by action value (av)
             # Not efficient, but simple way to track action queue
             self.action_queue.sort(key=lambda x: x[1])
@@ -67,6 +67,10 @@ class Game(ABC):
             character, av = self.action_queue.pop(0)
             self.current_character = character
             self.time = av
+
+            if self.time >= self.time_limit:
+                break
+
             print(f"Time: {self.time} | Character: {character.character_name}")
             print(f"Buffs: {self.buffs[character]}")
 
