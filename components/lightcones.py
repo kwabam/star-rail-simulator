@@ -39,3 +39,10 @@ cruising_in_the_stellar_sea = Lightcone( # S5
     base_def=463,
     crit_rate=16
 )
+
+post_op_conversation = Lightcone(
+    level=80,
+    base_hp=1058,
+    base_atk=423,
+    base_def=330,
+)

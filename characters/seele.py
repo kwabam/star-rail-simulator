@@ -1,7 +1,4 @@
-from components.character import Character
-from components.game import Game
-from components.lightcones import cruising_in_the_stellar_sea
-from components.stats import MainStats, SubStats
+from components import Character
 
 
 class Seele(Character):
@@ -13,7 +10,7 @@ class Seele(Character):
             self.game.add_buff(self, "cruising low hp", "crit_rate", 16, 99, 1)
 
         if self.get_speed() >= 120:
-            self.game.add_buff(self, "sss", "percent_atk", 12, 99, 1)
+            self.game.add_buff(self, buff_name="sss", buff_type="percent_atk", buff_value=12, duration=1, max_instances=1)
 
         damage = 0
         if self.energy >= self.energy_max:  # ult at start of turn. This gives extra turn of buff.
@@ -27,7 +24,7 @@ class Seele(Character):
 
     def basic(self):
         dmg = self.calculate_base_dmg(mv=1)
-        self.game.skill_points += 1
+        self.game.add_skill_point()
         self.add_energy(20)
         print("basic damage: ", dmg)
         return dmg

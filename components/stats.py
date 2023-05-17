@@ -1,10 +1,11 @@
 from dataclasses import dataclass, fields
 import json
 from typing import Optional
-from pathlib import Path
+import requests
 
-base_directory = Path(__file__).resolve().parent.parent
 
+
+base_url = "https://raw.githubusercontent.com/Dimbreath/StarRailData/master/ExcelOutput"
 
 key_map = {
     'HPDelta': 'flat_hp',
@@ -30,8 +31,9 @@ key_map = {
     'HealRatioBase': 'percent_heal'
 }
 
-terms = ["Critical", "Ratio", "Resistance"] # stats that are percentages
+terms = ["Critical", "Ratio", "Resistance"]  # stats that are percentages
 percent_stats = {key for key in key_map if any(term in key for term in terms)}
+
 
 @dataclass
 class SubStats:
@@ -51,6 +53,7 @@ class SubStats:
             field_value = relic_sub_affix_dict.get(field.name, 0)
             setattr(self, field.name, getattr(self, field.name) * field_value)
 
+
 @dataclass
 class MainStats:
     flat_hp: Optional[int] = 0
@@ -61,6 +64,7 @@ class MainStats:
     percent_atk: Optional[float] = 0
     percent_def: Optional[float] = 0
     percent_dmg: Optional[float] = 0
+    percent_heal: Optional[float] = 0
     crit_rate: Optional[float] = 0
     crit_dmg: Optional[float] = 0
     energy_regeneration_rate: Optional[float] = 0
@@ -73,9 +77,10 @@ class MainStats:
 
 
 def load_relic_sub_affix_config():
-    file_path = base_directory / 'data/RelicSubAffixConfig.json'
-    with open(file_path, 'r') as file:
-        data = json.load(file)
+    relic_url = base_url + '/RelicSubAffixConfig.json'
+    response = requests.get(relic_url)
+    data = json.loads(response.text)
+
 
     result = {}
     for key, entry in data["5"].items():
@@ -91,10 +96,11 @@ def load_relic_sub_affix_config():
         result[remapped_key] = calculated_value
     return result
 
+
 def load_relic_main_affix_config():
-    file_path = base_directory / 'data/RelicMainAffixConfig.json'
-    with open(file_path, 'r') as file:
-        data = json.load(file)
+    relic_url = base_url + '/RelicMainAffixConfig.json'
+    response = requests.get(relic_url)
+    data = json.loads(response.text)
 
     result = {}
     for _, entry in data.items():

@@ -3,10 +3,8 @@ import random
 import requests
 import json
 import logging
-from components.lightcones import Lightcone
 from abc import ABC, abstractmethod
 from dataclasses import fields
-from components.stats import MainStats, SubStats
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -77,19 +75,19 @@ class Character(ABC):
         self.energy = self.energy_max / 2
 
     def get_hp(self):
-        return self.base_hp * (1 + self.percent_hp) + self.flat_hp
+        return self.base_hp * (1 + self.percent_hp/100) + self.flat_hp
 
     def get_atk(self, flat_buff=0, percent_buff=0):
         return self.base_atk * (100 + self.percent_atk + percent_buff) / 100 + self.flat_atk + flat_buff
 
     def get_def(self, flat_buff=0, percent_buff=0):
-        return self.base_def * (100 + self.percent_def + percent_buff) / 100 + self.flat_def + flat_buff
+        return self.base_def * (1 + (self.percent_def + percent_buff) / 100) + self.flat_def + flat_buff
 
     def get_speed(self, flat_buff=0, percent_buff=0):
         return self.base_speed * (100 + self.percent_speed + percent_buff) / 100 + self.flat_speed + flat_buff
 
     def get_average_crit_multiplier(self, crit_rate_buff=0, crit_dmg_buff=0):
-        return 1 + (self.crit_rate / 100 * self.crit_dmg / 100)
+        return 1 + (min(self.crit_rate / 100, 1) * self.crit_dmg / 100)
 
     def get_crit_rate(self, crit_rate_buff=0):
         return (self.crit_rate + crit_rate_buff) / 100
