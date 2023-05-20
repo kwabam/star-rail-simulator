@@ -32,6 +32,14 @@ today_is_another_peaceful_day = Lightcone(
     percent_dmg=140*.4  # Hardcoded for QQ
 )
 
+before_dawn_s5 = Lightcone(
+    level=80,
+    base_hp=1058,
+    base_atk=582,
+    base_def=463,
+    crit_dmg=60
+)
+
 cruising_in_the_stellar_sea = Lightcone( # S5
     level=80,
     base_hp=952,

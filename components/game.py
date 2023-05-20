@@ -9,6 +9,7 @@ class Action:
     character: Character
     av: int
 
+
 class Game(ABC):
     def __init__(self, team: List[Character], enemy_level: int = 80, time_limit: int = 850, skill_points: int = 3):
         self.team = team
@@ -25,12 +26,10 @@ class Game(ABC):
             character.game = self
             self.action_queue.append(Action(character, av))
 
-
     def add_aoe_buff(self, buff_name: str, buff_type: str, buff_value: float,
-                 duration: int, max_instances: int = 1):
+                     duration: int, max_instances: int = 1):
         for character in self.team:
             self.add_buff(character, buff_name, buff_type, buff_value, duration, max_instances)
-
 
     def add_buff(self, character: Character, buff_name: str, buff_type: str, buff_value: float,
                  duration: int, max_instances: int = 1):
@@ -54,7 +53,7 @@ class Game(ABC):
         if existing_buffs_count >= max_instances:
             # If the maximum number of instances is reached, refresh the oldest buff
             self.buffs[character][oldest_buff_index] = (buff_name, buff_type, buff_value, duration)
-        else: # apply the buff to character
+        else:  # apply the buff to character
             modify_field(character, buff_type, buff_value)
             self.buffs[character].append((buff_name, buff_type, buff_value, duration))
 
@@ -72,13 +71,11 @@ class Game(ABC):
             # update the character's buffs with the new_buffs list
             self.buffs[character] = new_buffs
 
-
     def advance(self, character, percentage):
         for action in self.action_queue:
             if action.character == character:
                 time_to_action = action.av - self.time
-                action.av = self.time + time_to_action * (1 - percentage/100)
-
+                action.av = self.time + time_to_action * (1 - percentage / 100)
 
     def add_character_to_action_queue(self, character):
         av = 10000 / character.get_speed()
@@ -107,8 +104,10 @@ class Game(ABC):
 
             self.current_character.act()
             if len(self.action_queue) == 0 or \
-                    self.action_queue[-1].character != self.current_character: # some people advance forward their action
-                self.action_queue.append(Action(self.current_character, action.av + 10000 / self.current_character.get_speed()))
+                    self.action_queue[
+                        -1].character != self.current_character:  # some people advance forward their action
+                self.action_queue.append(
+                    Action(self.current_character, action.av + 10000 / self.current_character.get_speed()))
             self.process_buffs(self.current_character)
 
             # Update the character's action value and re-insert them into the action queue
@@ -116,8 +115,8 @@ class Game(ABC):
         print(f"Total Damage: {self.total_damage}")
 
     def add_damage(self, damage: int):
-        enemy_def = (200 + 10 * self.enemy_level) * (1 - self.current_character.percent_def_ignore/100)
-        def_multiplier = 1 - (enemy_def/(enemy_def + 200 + 10 * self.current_character.level))
+        enemy_def = (200 + 10 * self.enemy_level) * (1 - self.current_character.percent_def_ignore / 100)
+        def_multiplier = 1 - (enemy_def / (enemy_def + 200 + 10 * self.current_character.level))
         resistance_multiplier = 1 + self.current_character.percent_penetration / 100
         toughness_multiplier = .9
         damage = damage * def_multiplier * resistance_multiplier * toughness_multiplier
